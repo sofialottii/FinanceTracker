@@ -124,6 +124,9 @@ class MainActivity : ComponentActivity() {
                                 onSave = { amount, desc, isExp, catId ->
                                     viewModel.saveTransaction(amount, desc, isExp, catId)
                                 },
+                                onNewCategory = { name, color ->
+                                    viewModel.saveCategory(name, color)
+                                },
                                 onDismiss = { showSheet = false }
                             )
                         }

@@ -3,6 +3,7 @@ package com.example.financetracker.ui.screens.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financetracker.data.local.Account
+import com.example.financetracker.data.local.Category
 import com.example.financetracker.data.local.Transaction
 import com.example.financetracker.data.local.TransactionType
 import com.example.financetracker.data.repository.TransactionRepository
@@ -65,6 +66,16 @@ class HomeViewModel @Inject constructor(
                 color = color
             )
             repository.insertAccount(newAccount)
+        }
+    }
+
+    fun saveCategory(name: String, color: Int) {
+        viewModelScope.launch {
+            val newCategory = Category(
+                name = name,
+                color = color
+            )
+            repository.insertCategory(newCategory)
         }
     }
 
