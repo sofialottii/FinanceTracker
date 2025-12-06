@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.financetracker.data.local.Account
+import com.example.financetracker.util.toCurrency
 
 @Composable
 fun AccountCard(account: Account) {
@@ -63,7 +64,7 @@ fun AccountCard(account: Account) {
                     style = MaterialTheme.typography.labelSmall
                 )
                 Text(
-                    text = "${account.balance} €",
+                    text = account.balance.toCurrency(),
                     color = Color.White,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold

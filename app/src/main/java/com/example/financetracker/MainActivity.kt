@@ -32,6 +32,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.financetracker.ui.Screen
 import com.example.financetracker.ui.composables.AddTransactionSheet
+import com.example.financetracker.ui.screens.charts.ChartsScreen
 import com.example.financetracker.ui.screens.home.HomeScreen
 import com.example.financetracker.ui.screens.home.HomeViewModel
 import com.example.financetracker.ui.theme.FinanceTrackerTheme
@@ -100,9 +101,7 @@ class MainActivity : ComponentActivity() {
                             HomeScreen(viewModel = viewModel)
                         }
                         composable(Screen.Charts.route) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("Qui ci andranno i grafici!")
-                            }
+                            ChartsScreen()
                         }
                     }
 

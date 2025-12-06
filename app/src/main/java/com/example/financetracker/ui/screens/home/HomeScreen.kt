@@ -14,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.financetracker.ui.composables.AccountCard
+import com.example.financetracker.util.toCurrency
+import com.example.financetracker.util.toReadableDate
 
 @Composable
 fun HomeScreen(
@@ -69,13 +71,13 @@ fun HomeScreen(
                     Column {
                         Text(transaction.name, fontWeight = FontWeight.Medium)
                         Text(
-                            "Oggi", // TODO: Formattare la data
+                            text = transaction.date.toReadableDate(),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray
                         )
                     }
                     Text(
-                        text = "${if (transaction.amount > 0) "+" else ""}${transaction.amount} €",
+                        text = transaction.amount.toCurrency(),
                         color = if (transaction.amount < 0) Color.Red else Color(0xFF008000), // Rosso o Verde scuro
                         fontWeight = FontWeight.Bold
                     )
