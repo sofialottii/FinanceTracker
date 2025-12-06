@@ -15,6 +15,7 @@ interface TransactionRepository {
     fun getRecentTransactions(): Flow<List<Transaction>>
     suspend fun insertTransaction(transaction: Transaction)
     fun getTransactionsByDate(startDate: Long, endDate: Long): Flow<List<Transaction>>
+    suspend fun deleteTransaction(transaction: Transaction)
 
     // Categorie
     fun getCategories(): Flow<List<Category>>
@@ -45,5 +46,9 @@ class TransactionRepositoryImpl @Inject constructor(
 
     override suspend fun updateAccount(account: Account) {
         accountDao.updateAccount(account)
+    }
+
+    override suspend fun deleteTransaction(transaction: Transaction) {
+        transactionDao.deleteTransaction(transaction)
     }
 }

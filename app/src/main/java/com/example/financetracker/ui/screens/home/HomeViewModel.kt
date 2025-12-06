@@ -102,5 +102,24 @@ class HomeViewModel @Inject constructor(
         _timeRange.value = range
     }
 
+    fun deleteTransaction(transaction: Transaction) {
+        viewModelScope.launch {
+            repository.deleteTransaction(transaction)
+
+            // Ripristina il saldo
+            // Se era una spesa (importo negativo), dobbiamo RI-AGGIUNGERE quei soldi.
+            // Se era un'entrata, dobbiamo TOGLIERLI.
+            // Matematicamente basta sottrarre l'importo:
+            // Saldo attuale - (-50€ spesa) = Saldo + 50€
+            val currentAccounts = repository.getAccounts().first()
+            val account = currentAccounts.find { it.id == transaction.accountId }
+
+            if (account != null) {
+                val newBalance = account.balance - transaction.amount
+                repository.updateAccount(account.copy(balance = newBalance))
+            }
+        }
+    }
+
 
 }
