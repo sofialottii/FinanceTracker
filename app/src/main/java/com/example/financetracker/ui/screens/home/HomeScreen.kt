@@ -14,6 +14,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +35,9 @@ fun HomeScreen(
     val accounts by viewModel.accounts.collectAsState()
     val transactions by viewModel.recentTransactions.collectAsState()
     val currentFilter by viewModel.currentTimeRange.collectAsState()
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var transactionToDelete by remember { mutableStateOf<com.example.financetracker.data.local.Transaction?>(null) }
 
     Column(
         modifier = Modifier
@@ -131,8 +137,11 @@ fun HomeScreen(
                 val dismissState = rememberSwipeToDismissBoxState(
                     confirmValueChange = {
                         if (it == SwipeToDismissBoxValue.EndToStart) {
-                            viewModel.deleteTransaction(transaction)
-                            return@rememberSwipeToDismissBoxState true
+
+                            transactionToDelete = transaction
+                            showDeleteDialog = true
+
+                            return@rememberSwipeToDismissBoxState false
                         }
                         return@rememberSwipeToDismissBoxState false
                     }
@@ -183,6 +192,41 @@ fun HomeScreen(
                     }
                 )
             }
+        }
+
+        if (showDeleteDialog && transactionToDelete != null) {
+            AlertDialog(
+                onDismissRequest = {
+                    //clicchi fuori dal box, chiudi e basta
+                    showDeleteDialog = false
+                    transactionToDelete = null
+                },
+                title = { Text(text = "Elimina Transazione") },
+                text = { Text("Sei sicuro di voler eliminare questa transazione? L'operazione non è reversibile e il saldo verrà ricalcolato.") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            transactionToDelete?.let { viewModel.deleteTransaction(it) }
+                            showDeleteDialog = false
+                            transactionToDelete = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Elimina")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            // Annulla tutto
+                            showDeleteDialog = false
+                            transactionToDelete = null
+                        }
+                    ) {
+                        Text("Annulla")
+                    }
+                }
+            )
         }
     }
 }
