@@ -17,7 +17,7 @@ import com.example.financetracker.ui.composables.AccountCard
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel
 ) {
     val accounts by viewModel.accounts.collectAsState()
     val transactions by viewModel.recentTransactions.collectAsState()
@@ -56,7 +56,8 @@ fun HomeScreen(
         // lista verticale transazioni
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.weight(1f)
+                .fillMaxWidth()
         ) {
             items(transactions) { transaction ->
                 Row(

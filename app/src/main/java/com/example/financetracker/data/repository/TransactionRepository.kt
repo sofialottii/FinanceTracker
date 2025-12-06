@@ -9,6 +9,7 @@ interface TransactionRepository {
     // Conti
     fun getAccounts(): Flow<List<Account>>
     suspend fun insertAccount(account: Account)
+    suspend fun updateAccount(account: Account)
 
     // Transazioni
     fun getRecentTransactions(): Flow<List<Transaction>>
@@ -36,4 +37,8 @@ class TransactionRepositoryImpl @Inject constructor(
     override fun getCategories(): Flow<List<Category>> = categoryDao.getAllCategories()
 
     override suspend fun insertCategory(category: Category) = categoryDao.insertCategory(category)
+
+    override suspend fun updateAccount(account: Account) {
+        accountDao.updateAccount(account)
+    }
 }

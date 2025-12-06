@@ -97,7 +97,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable(Screen.Home.route) {
-                            HomeScreen()
+                            HomeScreen(viewModel = viewModel)
                         }
                         composable(Screen.Charts.route) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
