@@ -7,24 +7,43 @@ import com.example.financetracker.data.local.Category
 import com.example.financetracker.data.local.Transaction
 import com.example.financetracker.data.local.TransactionType
 import com.example.financetracker.data.repository.TransactionRepository
+import com.example.financetracker.util.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+enum class TimeRange(val label: String) {
+    ALL("Tutto"),
+    LAST_30_DAYS("30 Giorni"),
+    THIS_MONTH("Mese Corr.")
+}
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repository: TransactionRepository
 ) : ViewModel() {
 
+    private val _timeRange = MutableStateFlow(TimeRange.THIS_MONTH)
+    val currentTimeRange = _timeRange
+
     val accounts: StateFlow<List<Account>> = repository.getAccounts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val recentTransactions: StateFlow<List<Transaction>> = repository.getRecentTransactions()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val recentTransactions = _timeRange.flatMapLatest { range ->
+        when (range) {
+            TimeRange.ALL -> repository.getRecentTransactions()
+            TimeRange.THIS_MONTH -> repository.getTransactionsByDate(DateUtils.getStartOfMonth(), DateUtils.getEndOfDay())
+            TimeRange.LAST_30_DAYS -> repository.getTransactionsByDate(DateUtils.getStartOfLast30Days(), DateUtils.getEndOfDay())
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val categories = repository.getCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -77,6 +96,10 @@ class HomeViewModel @Inject constructor(
             )
             repository.insertCategory(newCategory)
         }
+    }
+
+    fun setTimeRange(range: TimeRange) {
+        _timeRange.value = range
     }
 
 

@@ -14,6 +14,7 @@ interface TransactionRepository {
     // Transazioni
     fun getRecentTransactions(): Flow<List<Transaction>>
     suspend fun insertTransaction(transaction: Transaction)
+    fun getTransactionsByDate(startDate: Long, endDate: Long): Flow<List<Transaction>>
 
     // Categorie
     fun getCategories(): Flow<List<Category>>
@@ -33,6 +34,10 @@ class TransactionRepositoryImpl @Inject constructor(
     override fun getRecentTransactions(): Flow<List<Transaction>> = transactionDao.getAllTransactions()
 
     override suspend fun insertTransaction(transaction: Transaction) = transactionDao.insertTransaction(transaction)
+
+    override fun getTransactionsByDate(startDate: Long, endDate: Long): Flow<List<Transaction>> {
+        return transactionDao.getTransactionsByDateRange(startDate, endDate)
+    }
 
     override fun getCategories(): Flow<List<Category>> = categoryDao.getAllCategories()
 

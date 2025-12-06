@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.financetracker.ui.composables.AccountCard
 import com.example.financetracker.util.toCurrency
 import com.example.financetracker.util.toReadableDate
@@ -29,6 +28,7 @@ fun HomeScreen(
 ) {
     val accounts by viewModel.accounts.collectAsState()
     val transactions by viewModel.recentTransactions.collectAsState()
+    val currentFilter by viewModel.currentTimeRange.collectAsState()
 
     Column(
         modifier = Modifier
@@ -74,6 +74,38 @@ fun HomeScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Filtra",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Filtri a pillola
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(com.example.financetracker.ui.screens.home.TimeRange.values()) { range ->
+                    val isSelected = range == currentFilter
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { viewModel.setTimeRange(range) },
+                        label = { Text(range.label) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         //sezione Transazioni
         Text(
