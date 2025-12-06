@@ -32,6 +32,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.financetracker.ui.Screen
 import com.example.financetracker.ui.composables.AddTransactionSheet
+import com.example.financetracker.ui.screens.account.AddAccountScreen
 import com.example.financetracker.ui.screens.charts.ChartsScreen
 import com.example.financetracker.ui.screens.home.HomeScreen
 import com.example.financetracker.ui.screens.home.HomeViewModel
@@ -98,10 +99,18 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable(Screen.Home.route) {
-                            HomeScreen(viewModel = viewModel)
+                            HomeScreen(viewModel = viewModel,
+                                onAddAccountClick = { navController.navigate(Screen.AddAccount.route) }
+                            )
                         }
                         composable(Screen.Charts.route) {
                             ChartsScreen()
+                        }
+                        composable(Screen.AddAccount.route) {
+                            AddAccountScreen(
+                                onBack = { navController.popBackStack() },
+                                viewModel = viewModel
+                            )
                         }
                     }
 

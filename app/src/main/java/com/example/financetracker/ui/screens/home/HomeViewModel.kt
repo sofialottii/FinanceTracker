@@ -57,5 +57,16 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun saveAccount(name: String, balance: Double, color: Int) {
+        viewModelScope.launch {
+            val newAccount = Account(
+                name = name,
+                balance = balance,
+                color = color
+            )
+            repository.insertAccount(newAccount)
+        }
+    }
+
 
 }
