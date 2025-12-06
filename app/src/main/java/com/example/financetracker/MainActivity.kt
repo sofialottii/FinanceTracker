@@ -7,28 +7,39 @@ import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.financetracker.ui.Screen
+import com.example.financetracker.ui.composables.AddTransactionSheet
 import com.example.financetracker.ui.screens.home.HomeScreen
+import com.example.financetracker.ui.screens.home.HomeViewModel
 import com.example.financetracker.ui.theme.FinanceTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -37,6 +48,13 @@ class MainActivity : ComponentActivity() {
                 // Per sapere quale tab è selezionato
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
+
+                val viewModel: HomeViewModel = hiltViewModel()
+
+                //stato per la tendina
+                var showSheet by remember { mutableStateOf(false) }
+                val sheetState = rememberModalBottomSheetState()
+                val categories by viewModel.categories.collectAsState()
 
                 Scaffold(
                     // --- BOTTOM BAR ---
@@ -65,7 +83,7 @@ class MainActivity : ComponentActivity() {
                         if (currentRoute == Screen.Home.route) {
                             FloatingActionButton(
                                 onClick = {
-                                    // TODO: Apri il ModalBottomSheet qui
+                                    showSheet = true
                                 }
                             ) {
                                 Text("+", style = MaterialTheme.typography.headlineMedium)
@@ -85,6 +103,21 @@ class MainActivity : ComponentActivity() {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 Text("Qui ci andranno i grafici!")
                             }
+                        }
+                    }
+
+                    if (showSheet) {
+                        ModalBottomSheet(
+                            onDismissRequest = { showSheet = false },
+                            sheetState = sheetState
+                        ) {
+                            AddTransactionSheet(
+                                availableCategories = categories,
+                                onSave = { amount, desc, isExp, catId ->
+                                    viewModel.saveTransaction(amount, desc, isExp, catId)
+                                },
+                                onDismiss = { showSheet = false }
+                            )
                         }
                     }
                 }

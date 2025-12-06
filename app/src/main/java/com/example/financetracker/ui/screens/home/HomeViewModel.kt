@@ -26,6 +26,35 @@ class HomeViewModel @Inject constructor(
     val recentTransactions: StateFlow<List<Transaction>> = repository.getRecentTransactions()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val categories = repository.getCategories()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun saveTransaction(amount: Double, title: String, isExpense: Boolean, categoryId: Int?) {
+        viewModelScope.launch {
+            //importo deve essere negativo per le spese
+            val finalAmount = if (isExpense) -kotlin.math.abs(amount) else kotlin.math.abs(amount)
+
+            val defaultAccountId = accounts.value.firstOrNull()?.id ?: return@launch
+
+            val newTransaction = Transaction(
+                accountId = defaultAccountId,
+                categoryId = categoryId,
+                name = title,
+                amount = finalAmount,
+                date = System.currentTimeMillis(),
+                type = if (isExpense) TransactionType.EXPENSE else TransactionType.INCOME
+            )
+            repository.insertTransaction(newTransaction)
+
+
+            val account = accounts.value.find { it.id == defaultAccountId }
+            if (account != null) {
+                val newBalance = account.balance + finalAmount
+                repository.insertAccount(account.copy(balance = newBalance))
+            }
+        }
+    }
+
     // 3. dati di prova (cancellerò)
     fun addMockData() {
         viewModelScope.launch {
