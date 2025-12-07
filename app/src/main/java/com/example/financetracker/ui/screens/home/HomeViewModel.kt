@@ -12,7 +12,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -70,7 +69,7 @@ class HomeViewModel @Inject constructor(
     val categories = repository.getCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun saveTransaction(amount: Double, title: String, isExpense: Boolean, categoryId: Int?) {
+    fun saveTransaction(amount: Double, title: String, isExpense: Boolean, categoryId: Int?, date: Long) {
         viewModelScope.launch {
 
             val currentAccounts = repository.getAccounts().first()
@@ -87,7 +86,7 @@ class HomeViewModel @Inject constructor(
                 categoryId = categoryId,
                 name = title,
                 amount = finalAmount,
-                date = System.currentTimeMillis(),
+                date = date,
                 type = if (isExpense) TransactionType.EXPENSE else TransactionType.INCOME
             )
             repository.insertTransaction(newTransaction)

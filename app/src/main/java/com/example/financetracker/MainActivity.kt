@@ -121,8 +121,8 @@ class MainActivity : ComponentActivity() {
                         ) {
                             AddTransactionSheet(
                                 availableCategories = categories,
-                                onSave = { amount, desc, isExp, catId ->
-                                    viewModel.saveTransaction(amount, desc, isExp, catId)
+                                onSave = { amount, desc, isExp, catId, date ->
+                                    viewModel.saveTransaction(amount, desc, isExp, catId, date)
                                 },
                                 onNewCategory = { name, color ->
                                     viewModel.saveCategory(name, color)

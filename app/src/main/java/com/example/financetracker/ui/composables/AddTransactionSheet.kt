@@ -14,22 +14,27 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.financetracker.data.local.Category
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionSheet(
     availableCategories: List<Category>,
-    onSave: (Double, String, Boolean, Int?) -> Unit,
+    onSave: (Double, String, Boolean, Int?, Long) -> Unit,
     onNewCategory: (String, Int) -> Unit,
     onDeleteCategory: (Category) -> Unit,
     onDismiss: () -> Unit
@@ -41,6 +46,9 @@ fun AddTransactionSheet(
 
     var showNewCategoryDialog by remember { mutableStateOf(false) }
 
+    var selectedDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
     var showDeleteCatDialog by remember { mutableStateOf(false) }
     var categoryToDelete by remember { mutableStateOf<Category?>(null) }
 
@@ -51,6 +59,36 @@ fun AddTransactionSheet(
             .padding(bottom = 32.dp)
     ) {
         Text("Nuova Transazione", style = MaterialTheme.typography.titleLarge)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(selectedDate)),
+                onValueChange = { },
+                readOnly = true, // L'utente non può scrivere a mano
+                label = { Text("Data") },
+                trailingIcon = {
+                    Icon(Icons.Default.DateRange, contentDescription = "Seleziona Data")
+                },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                    //.clickable { showDatePicker = true },
+                enabled = false,
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .alpha(0f) // Invisibile
+                    .clickable { showDatePicker = true }
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -176,7 +214,7 @@ fun AddTransactionSheet(
             onClick = {
                 val amount = amountText.toDoubleOrNull()
                 if (amount != null && description.isNotEmpty()) {
-                    onSave(amount, description, isExpense, selectedCategory?.id)
+                    onSave(amount, description, isExpense, selectedCategory?.id, selectedDate)
                     onDismiss()
                 }
             },
@@ -187,6 +225,30 @@ fun AddTransactionSheet(
         }
     }
 
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { selectedDate = it }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Annulla")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     if (showNewCategoryDialog) {
         CreateCategoryDialog(
