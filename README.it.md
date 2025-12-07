@@ -1,5 +1,12 @@
 # Finance Tracker App
 
+[![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
+[![it](https://img.shields.io/badge/lang-it-green.svg)](README.it.md)
+
+*Read this in [English](README.md).*
+
+## Descrizione
+
 Applicazione Android per la gestione delle finanze personali, sviluppata interamente in Kotlin e Jetpack Compose, con architettura MVVM.
 
 ## Funzionalità
