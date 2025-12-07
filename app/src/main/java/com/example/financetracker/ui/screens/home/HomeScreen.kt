@@ -39,6 +39,8 @@ fun HomeScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var transactionToDelete by remember { mutableStateOf<com.example.financetracker.data.local.Transaction?>(null) }
 
+    val selectedAccount by viewModel.selectedAccount.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -57,7 +59,10 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             items(accounts) { account ->
-                AccountCard(account = account)
+                AccountCard(account = account,
+                    isSelected = account.id == selectedAccount?.id,
+                    onClick = { viewModel.selectAccount(account) }
+                )
             }
 
             item {

@@ -13,8 +13,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,20 +33,39 @@ class HomeViewModel @Inject constructor(
     private val repository: TransactionRepository
 ) : ViewModel() {
 
+    private val _selectedAccount = MutableStateFlow<Account?>(null)
+    val selectedAccount = _selectedAccount.asStateFlow()
+
     private val _timeRange = MutableStateFlow(TimeRange.THIS_MONTH)
     val currentTimeRange = _timeRange
 
-    val accounts: StateFlow<List<Account>> = repository.getAccounts()
+    val accounts = repository.getAccounts()
+        .onEach { list ->
+            // Se non ho selezionato nulla e ho dei conti, seleziono il primo di default
+            if (_selectedAccount.value == null && list.isNotEmpty()) {
+                _selectedAccount.value = list.first()
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val recentTransactions = _timeRange.flatMapLatest { range ->
-        when (range) {
-            TimeRange.ALL -> repository.getRecentTransactions()
-            TimeRange.THIS_MONTH -> repository.getTransactionsByDate(DateUtils.getStartOfMonth(), DateUtils.getEndOfDay())
-            TimeRange.LAST_30_DAYS -> repository.getTransactionsByDate(DateUtils.getStartOfLast30Days(), DateUtils.getEndOfDay())
+    val recentTransactions = combine(_selectedAccount, _timeRange) { account, timeRange ->
+        // Calcoliamo le date in base al filtro
+        val (start, end) = when (timeRange) {
+            TimeRange.ALL -> 0L to Long.MAX_VALUE
+            TimeRange.THIS_MONTH -> DateUtils.getStartOfMonth() to DateUtils.getEndOfDay()
+            TimeRange.LAST_30_DAYS -> DateUtils.getStartOfLast30Days() to DateUtils.getEndOfDay()
         }
+        // Restituiamo la coppia di parametri per la query successiva
+        Triple(account?.id, start, end)
+    }.flatMapLatest { (accountId, start, end) ->
+        // Eseguiamo la query vera
+        repository.getTransactionsByAccount(accountId, start, end)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun selectAccount(account: Account) {
+        _selectedAccount.value = account
+    }
 
     val categories = repository.getCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -55,11 +77,13 @@ class HomeViewModel @Inject constructor(
 
             val defaultAccountId = accounts.value.firstOrNull()?.id ?: return@launch
 
+            val targetAccount = _selectedAccount.value ?: return@launch
+
             //importo deve essere negativo per le spese
             val finalAmount = if (isExpense) -kotlin.math.abs(amount) else kotlin.math.abs(amount)
 
             val newTransaction = Transaction(
-                accountId = defaultAccountId,
+                accountId = targetAccount.id,
                 categoryId = categoryId,
                 name = title,
                 amount = finalAmount,
@@ -68,12 +92,17 @@ class HomeViewModel @Inject constructor(
             )
             repository.insertTransaction(newTransaction)
 
+            val newBalance = targetAccount.balance + finalAmount
+            repository.updateAccount(targetAccount.copy(balance = newBalance))
 
-            val account = currentAccounts.find { it.id == defaultAccountId }
+            _selectedAccount.value = targetAccount.copy(balance = newBalance)
+
+
+            /*val account = currentAccounts.find { it.id == defaultAccountId }
             if (account != null) {
                 val newBalance = account.balance + finalAmount
                 repository.updateAccount(account.copy(balance = newBalance))
-            }
+            }*/
         }
     }
 
@@ -106,11 +135,6 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             repository.deleteTransaction(transaction)
 
-            // Ripristina il saldo
-            // Se era una spesa (importo negativo), dobbiamo RI-AGGIUNGERE quei soldi.
-            // Se era un'entrata, dobbiamo TOGLIERLI.
-            // Matematicamente basta sottrarre l'importo:
-            // Saldo attuale - (-50€ spesa) = Saldo + 50€
             val currentAccounts = repository.getAccounts().first()
             val account = currentAccounts.find { it.id == transaction.accountId }
 

@@ -16,6 +16,7 @@ interface TransactionRepository {
     suspend fun insertTransaction(transaction: Transaction)
     fun getTransactionsByDate(startDate: Long, endDate: Long): Flow<List<Transaction>>
     suspend fun deleteTransaction(transaction: Transaction)
+    fun getTransactionsByAccount(accountId: Int?, startDate: Long, endDate: Long): Flow<List<Transaction>>
 
     // Categorie
     fun getCategories(): Flow<List<Category>>
@@ -50,5 +51,15 @@ class TransactionRepositoryImpl @Inject constructor(
 
     override suspend fun deleteTransaction(transaction: Transaction) {
         transactionDao.deleteTransaction(transaction)
+    }
+
+    override fun getTransactionsByAccount(accountId: Int?, startDate: Long, endDate: Long): Flow<List<Transaction>> {
+        return if (accountId == null) {
+            // Se ID è null, restituisci TUTTO (vista globale)
+            transactionDao.getAllTransactionsByDate(startDate, endDate)
+        } else {
+            // Altrimenti filtra per quella carta
+            transactionDao.getTransactionsByAccountAndDate(accountId, startDate, endDate)
+        }
     }
 }

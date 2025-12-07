@@ -17,6 +17,13 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE date BETWEEN :startDate AND :endDate ORDER BY date DESC")
     fun getTransactionsByDateRange(startDate: Long, endDate: Long): Flow<List<Transaction>>
 
+    @Query("SELECT * FROM transactions WHERE accountId = :accountId AND date BETWEEN :startDate AND :endDate ORDER BY date DESC")
+    fun getTransactionsByAccountAndDate(accountId: Int, startDate: Long, endDate: Long): Flow<List<Transaction>>
+
+    // Filtra per Data (Tutti i conti) - Questa ce l'avevi già, ma controlla
+    @Query("SELECT * FROM transactions WHERE date BETWEEN :startDate AND :endDate ORDER BY date DESC")
+    fun getAllTransactionsByDate(startDate: Long, endDate: Long): Flow<List<Transaction>>
+
     // smma totale uscite
     //per la somma precisa SQL: "SELECT SUM(amount) FROM transactions WHERE type = 'EXPENSE'"
 
