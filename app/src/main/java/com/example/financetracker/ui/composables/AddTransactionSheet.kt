@@ -1,8 +1,10 @@
 package com.example.financetracker.ui.composables
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -29,6 +31,7 @@ fun AddTransactionSheet(
     availableCategories: List<Category>,
     onSave: (Double, String, Boolean, Int?) -> Unit,
     onNewCategory: (String, Int) -> Unit,
+    onDeleteCategory: (Category) -> Unit,
     onDismiss: () -> Unit
 ) {
     var amountText by remember { mutableStateOf("") }
@@ -37,6 +40,9 @@ fun AddTransactionSheet(
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
 
     var showNewCategoryDialog by remember { mutableStateOf(false) }
+
+    var showDeleteCatDialog by remember { mutableStateOf(false) }
+    var categoryToDelete by remember { mutableStateOf<Category?>(null) }
 
     Column(
         modifier = Modifier
@@ -89,27 +95,77 @@ fun AddTransactionSheet(
 
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(availableCategories) { category ->
-                FilterChip(
-                    selected = selectedCategory == category,
-                    onClick = { selectedCategory = if (selectedCategory == category) null else category },
-                    label = { Text(category.name) },
-                    leadingIcon = if (selectedCategory == category) {
-                        { Icon(androidx.compose.material.icons.Icons.Default.Check, null) }
-                    } else null,
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(category.color).copy(alpha = 0.2f),
-                        selectedLabelColor = Color.Black
-                    )
-                )
+
+                val isSelected = selectedCategory == category
+                val categoryColor = Color(category.color)
+
+                Surface(
+                    color = if (isSelected) categoryColor.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (isSelected) categoryColor else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                    ),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .combinedClickable(
+                            onClick = {
+                                // Selezione / Deselezione
+                                selectedCategory = if (isSelected) null else category
+                            },
+                            onLongClick = {
+                                // Eliminazione
+                                categoryToDelete = category
+                                showDeleteCatDialog = true
+                            }
+                        )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Se selezionato, mostra la spunta
+                        if (isSelected) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(18.dp).padding(end = 8.dp)
+                            )
+                        }
+
+                        Text(
+                            text = category.name,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             }
 
             item {
-                FilterChip(
-                    selected = false,
-                    onClick = { showNewCategoryDialog = true }, // Apre il dialog
-                    label = { Text("Nuova") },
-                    leadingIcon = { Icon(Icons.Default.Add, null) }
-                )
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { showNewCategoryDialog = true }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Nuova",
+                            modifier = Modifier.size(18.dp).padding(end = 8.dp)
+                        )
+                        Text(
+                            text = "Nuova",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                }
             }
         }
 
@@ -138,6 +194,40 @@ fun AddTransactionSheet(
             onConfirm = { name, color ->
                 onNewCategory(name, color)
                 showNewCategoryDialog = false
+            }
+        )
+    }
+
+    if (showDeleteCatDialog && categoryToDelete != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeleteCatDialog = false
+                categoryToDelete = null
+            },
+            title = { Text("Elimina Categoria") },
+            text = {
+                Text("Vuoi eliminare '${categoryToDelete?.name}'?\nLe transazioni associate NON verranno cancellate, ma perderanno la categoria.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        categoryToDelete?.let { onDeleteCategory(it) }
+                        //se avevamo selezionato proprio quella categoria, deselezioniamola
+                        if (selectedCategory == categoryToDelete) {
+                            selectedCategory = null
+                        }
+                        showDeleteCatDialog = false
+                        categoryToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Elimina")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteCatDialog = false }) {
+                    Text("Annulla")
+                }
             }
         )
     }

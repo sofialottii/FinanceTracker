@@ -22,6 +22,7 @@ interface TransactionRepository {
     // Categorie
     fun getCategories(): Flow<List<Category>>
     suspend fun insertCategory(category: Category)
+    suspend fun deleteCategory(category: Category)
 }
 
 class TransactionRepositoryImpl @Inject constructor(
@@ -66,5 +67,9 @@ class TransactionRepositoryImpl @Inject constructor(
 
     override suspend fun deleteAccount(account: Account) {
         accountDao.deleteAccount(account)
+    }
+
+    override suspend fun deleteCategory(category: Category) {
+        categoryDao.deleteCategory(category)
     }
 }

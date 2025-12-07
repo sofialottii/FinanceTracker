@@ -150,5 +150,11 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun deleteCategory(category: Category) {
+        viewModelScope.launch {
+            repository.deleteCategory(category)
+        }
+    }
+
 
 }

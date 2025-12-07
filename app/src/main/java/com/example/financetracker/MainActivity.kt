@@ -127,6 +127,9 @@ class MainActivity : ComponentActivity() {
                                 onNewCategory = { name, color ->
                                     viewModel.saveCategory(name, color)
                                 },
+                                onDeleteCategory = { category ->
+                                    viewModel.deleteCategory(category)
+                                },
                                 onDismiss = { showSheet = false }
                             )
                         }
