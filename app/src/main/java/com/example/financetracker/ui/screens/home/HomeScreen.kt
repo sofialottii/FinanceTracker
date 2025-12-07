@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -19,9 +20,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.financetracker.data.local.Account
 import com.example.financetracker.ui.composables.AccountCard
 import com.example.financetracker.util.toCurrency
 import com.example.financetracker.util.toReadableDate
@@ -40,6 +43,9 @@ fun HomeScreen(
     var transactionToDelete by remember { mutableStateOf<com.example.financetracker.data.local.Transaction?>(null) }
 
     val selectedAccount by viewModel.selectedAccount.collectAsState()
+
+    var showAccountDeleteDialog by remember { mutableStateOf(false) }
+    var accountToDelete by remember { mutableStateOf<Account?>(null) }
 
     Column(
         modifier = Modifier
@@ -61,27 +67,42 @@ fun HomeScreen(
             items(accounts) { account ->
                 AccountCard(account = account,
                     isSelected = account.id == selectedAccount?.id,
-                    onClick = { viewModel.selectAccount(account) }
+                    onClick = { viewModel.selectAccount(account) },
+                    onLongClick = {
+                        accountToDelete = account
+                        showAccountDeleteDialog = true
+                    }
                 )
             }
 
+            //PULSANTE PER AGGIUNGERE
             item {
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.LightGray.copy(alpha = 0.2f)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ),
                     modifier = Modifier
-                        .width(60.dp)
+                        .width(70.dp)
                         .height(170.dp)
                         .clickable { onAddAccountClick() },
-                    elevation = CardDefaults.cardElevation(4.dp)
+                    elevation = CardDefaults.cardElevation(0.dp)
                 ) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Aggiungi Conto",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(32.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Aggiungi Conto",
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -197,6 +218,39 @@ fun HomeScreen(
                     }
                 )
             }
+        }
+
+        if (showAccountDeleteDialog && accountToDelete != null) {
+            AlertDialog(
+                onDismissRequest = {
+                    showAccountDeleteDialog = false
+                    accountToDelete = null
+                },
+                title = { Text("Elimina Conto") },
+                text = {
+                    Text(
+                        "Vuoi eliminare definitivamente '${accountToDelete?.name}'?\n\n" +
+                                "ATTENZIONE: Tutte le transazioni associate a questo conto verranno cancellate per sempre."
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            accountToDelete?.let { viewModel.deleteAccount(it) }
+                            showAccountDeleteDialog = false
+                            accountToDelete = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Elimina tutto")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAccountDeleteDialog = false }) {
+                        Text("Annulla")
+                    }
+                }
+            )
         }
 
         if (showDeleteDialog && transactionToDelete != null) {

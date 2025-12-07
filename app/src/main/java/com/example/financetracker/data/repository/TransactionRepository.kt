@@ -10,6 +10,7 @@ interface TransactionRepository {
     fun getAccounts(): Flow<List<Account>>
     suspend fun insertAccount(account: Account)
     suspend fun updateAccount(account: Account)
+    suspend fun deleteAccount(account: Account)
 
     // Transazioni
     fun getRecentTransactions(): Flow<List<Transaction>>
@@ -61,5 +62,9 @@ class TransactionRepositoryImpl @Inject constructor(
             // Altrimenti filtra per quella carta
             transactionDao.getTransactionsByAccountAndDate(accountId, startDate, endDate)
         }
+    }
+
+    override suspend fun deleteAccount(account: Account) {
+        accountDao.deleteAccount(account)
     }
 }

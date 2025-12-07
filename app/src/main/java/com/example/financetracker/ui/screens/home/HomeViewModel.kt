@@ -97,12 +97,6 @@ class HomeViewModel @Inject constructor(
 
             _selectedAccount.value = targetAccount.copy(balance = newBalance)
 
-
-            /*val account = currentAccounts.find { it.id == defaultAccountId }
-            if (account != null) {
-                val newBalance = account.balance + finalAmount
-                repository.updateAccount(account.copy(balance = newBalance))
-            }*/
         }
     }
 
@@ -141,6 +135,17 @@ class HomeViewModel @Inject constructor(
             if (account != null) {
                 val newBalance = account.balance - transaction.amount
                 repository.updateAccount(account.copy(balance = newBalance))
+            }
+        }
+    }
+
+    fun deleteAccount(account: Account) {
+        viewModelScope.launch {
+            repository.deleteAccount(account)
+
+            //se stavo guardando proprio quel conto, resetto la selezione
+            if (_selectedAccount.value?.id == account.id) {
+                _selectedAccount.value = null
             }
         }
     }
